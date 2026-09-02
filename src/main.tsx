@@ -2,6 +2,9 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import App from './App';
+import { Consent } from './pages/Consent/Consent';
+import { Login } from './pages/Login/Login';
+import { SignIn } from './pages/SignIn/SignIn';
 import './index.css';
 
 /**
@@ -17,6 +20,10 @@ createRoot(document.getElementById('root')!).render(
       <Routes>
         <Route path="/" element={<Navigate to="/harness" replace />} />
         <Route path="/harness" element={<App />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signin" element={<SignIn />} />
+        <Route path="/consent" element={<Consent />} />
+        <Route path="/test2" element={<Login />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

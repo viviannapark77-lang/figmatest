@@ -167,12 +167,17 @@ src/tokens/*.css  ──@theme──▶  Tailwind 유틸리티  ──▶  컴�
 | Figma 변수 → 토큰 동기화 | `/sync-tokens` | `token-guardian` → `design-reviewer` |
 | 하드코딩 위반 수정 | `/sync-tokens` → `/new-component` | `token-guardian`(매핑 보고) → `component-builder`(수정) → `design-reviewer` |
 | 완료 전 검증만 | `/review-design` | `design-reviewer` |
+| PRD·확인된 Figma 레이아웃 + 기존 컴포넌트 → 페이지 조립 | `/build-page` | `component-builder` → `design-reviewer` |
+| 텍스트 PRD·요구사항 → UI 컴포넌트 목록 추출 | `/analyze-prd` | `prd-analyzer` |
+| UI 컴포넌트 목록 → 계층 구조·Auto Layout 설계 | `/design-layout` | `layout-architect` |
+| UI 구조에 디자인 토큰 적용 (Figma 노드 생성 전) | `/apply-design-tokens` | `design-system-manager` |
+| UI 트리의 더미 텍스트 → 실무 마이크로카피 | `/write-microcopy` | `ux-writer` |
 | 문서·설정 변경 | — | 에이전트 없음. 메인 세션이 직접 |
 
-- **에이전트 4개는 각각 내부에서 Clarify→Reuse→Implement→Evaluate 4단계를 전부 거친다.** 단계별 통과 조건은 각 에이전트 파일에 적혀 있다.
+- **에이전트 4개(`figma-implementer`·`component-builder`·`token-guardian`·`design-reviewer`)는 각각 내부에서 Clarify→Reuse→Implement→Evaluate 4단계를 전부 거친다.** 단계별 통과 조건은 각 에이전트 파일에 적혀 있다. `prd-analyzer`·`layout-architect`·`design-system-manager`·`ux-writer`는 `src/`를 건드리지 않는 별도 파이프라인(텍스트 PRD → UI 구조 → 계층·Auto Layout → 스타일 결합 → 텍스트 채우기 → 후속 Figma 생성)이라 이 목록에 포함하지 않는다.
 - **`design-reviewer`는 코드가 바뀐 모든 작업에서 생략할 수 없다.** 생략하면 원칙 4 위반이다.
 - 서브에이전트는 사용자에게 직접 질문할 수 없다. Clarify에서 모호한 지점이 나오면 **목록을 반환**하고 질문은 메인 세션이 한다. 목록이 비지 않으면 Implement로 내려가지 않는다.
-- 편집 권한이 에이전트별로 분리돼 있다: 토큰 파일은 `token-guardian`만, 컴포넌트는 `figma-implementer`·`component-builder`만, `design-reviewer`는 편집 권한이 없다.
+- 편집 권한이 에이전트별로 분리돼 있다: 토큰 파일은 `token-guardian`만, 컴포넌트는 `figma-implementer`·`component-builder`만 편집한다. `design-reviewer`·`prd-analyzer`·`layout-architect`·`design-system-manager`는 편집 권한이 없다 — 산출물을 응답으로만 반환하고, 파일 저장은 호출한 스킬/메인 세션이 담당한다. `ux-writer`만 예외로 `Write` 권한이 있지만 `/docs/ui_specs/{FeatureName}-Text_Populated_Tree.json` 생성으로 범위가 제한된다 (그 외 파일은 건드리지 않는다).
 
 ## 스킬 가이드
 
@@ -182,8 +187,13 @@ src/tokens/*.css  ──@theme──▶  Tailwind 유틸리티  ──▶  컴�
 |---|---|---|---|
 | `/figma-to-code` | `figma-implementer` | `src/components/**` | 컴포넌트 + 스토리 + 사용 토큰 목록 |
 | `/new-component` | `component-builder` | `src/components/**` | 컴포넌트 + 스토리 + props 표 |
+| `/build-page` | `component-builder` | `src/pages/**`, `src/main.tsx`(라우트 추가만) | 페이지 + 스토리 + `<Page>.design.md` |
 | `/sync-tokens` | `token-guardian` | `src/tokens/**` | 토큰 diff 표 |
 | `/review-design` | `design-reviewer` | 없음 (Write·Edit 미부여) | PASS/FAIL 판정 표 |
+| `/analyze-prd` | `prd-analyzer` | 없음 (Write·Edit 미부여) | UI 컴포넌트 목록 (Markdown, 저장은 호출자) |
+| `/design-layout` | `layout-architect` | 없음 (Write·Edit 미부여) | 계층·Auto Layout 트리 (JSON, 저장은 호출자) |
+| `/apply-design-tokens` | `design-system-manager` | 없음 (Write·Edit 미부여) | styles 결합 구조 (JSON/YAML, 저장은 호출자) |
+| `/write-microcopy` | `ux-writer` | `/docs/ui_specs/{FeatureName}-Text_Populated_Tree.json` 생성만 (그 외 없음) | 텍스트가 채워진 최종 트리 (JSON, 에이전트가 직접 저장) |
 
 - 절차는 스킬 파일에만 적는다. 에이전트 파일에 절차를 복사하지 않는다. 중복되면 스킬 파일이 단일 진실 공급원이다.
 - 스킬은 에이전트 없이도 성립한다. 사람이 직접 따라 할 수도, 메인 세션이 그대로 실행할 수도 있다.
