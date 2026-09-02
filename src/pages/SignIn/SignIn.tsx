@@ -28,8 +28,8 @@ import { supabase } from '../../lib/supabase';
  *
  * ## 가입 요청은 Supabase Auth 로 간다
  * `src/lib/supabase.ts` 의 클라이언트 하나를 쓴다. 성공 경로는 세 단계다:
- * `auth.signUp` → `profiles` 에 본인 행 1개 → `/consent` 이동.
- * `profiles.username` 에는 이메일의 `@` 앞부분을 넣는다 (요청자 결정).
+ * `auth.signUp` → `contacts` 테이블에 기록 → `/consent` 이동.
+ * contacts 테이블에 기록한다(profiles는 실제 프로젝트에 없어 쓰지 않음).
  *
  * 아이디 필드 값이 이메일 형식이 아니면 요청을 보내지 않고 아이디 필드만 error
  * 상태로 만들어 "이메일을 입력해주세요" 를 띄운다. 판정은 `Login` 과 같은
@@ -90,15 +90,18 @@ export function SignIn() {
       return;
     }
 
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: data.user.id,
-      username: id.split('@')[0],
+    // 사용자 결정: 실제 프로젝트에 profiles 테이블이 없어(404 확인됨) 쓰지 않는다.
+    // contacts 테이블에만 기록한다. name은 이메일 @ 앞부분, message는 고정 문구다.
+    const { error: contactError } = await supabase.from('contacts').insert({
+      name: id.split('@')[0],
+      email: id,
+      message: '회원가입 완료',
     });
 
     setIsSubmitting(false);
 
-    if (profileError) {
-      setError(`계정은 만들어졌지만 프로필 저장에 실패했습니다: ${profileError.message}`);
+    if (contactError) {
+      setError(`계정은 만들어졌지만 연락처 기록에 실패했습니다: ${contactError.message}`);
       return;
     }
 
